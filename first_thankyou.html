@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>First Thank You</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Basic page styles */
+    body {
+      margin: 0;
+      padding: 0;
+      /* background-color: pink;  <-- Removed so the global background applies */
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      overflow: hidden; /* Prevent scrollbars */
+    }
+    /* Main content sits on top of bouncing elements */
+    .main-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-size: 120px; /* Increased text size */
+      /* Apply a gradient to the text */
+      background: linear-gradient(45deg, #e61700, #dd6300);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent; /* This allows the gradient to show through */
+      -webkit-text-stroke: 2px white; /* White outline */
+      text-shadow: none; /* Remove any text-shadow that may block the gradient */
+    }
+    .button {
+      padding: 60px 80px; /* Increased padding for larger buttons */
+      font-size: 100px; /* Bigger button text */
+      background-color: #c62a18; /* Vibrant red for the buttons */
+      color: #fff; /* White text for contrast */
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 40px;
+    }
+    /* Container for the bouncing hearts (in the background) */
+    #hearts-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    /* Container for the bouncing pictures (also behind the main content) */
+    #pictures-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    /* Each bouncing heart element */
+    .heart {
+      position: absolute;
+      color: red;
+      /* font-size, width, and height are set via JavaScript */
+    }
+    /* Style for the bouncing images:
+       They are clipped into a heart shape with a red border and glowing effect.
+       The clip-path below creates a heart shape using an SVG-style path. */
+    .picture {
+      position: absolute;
+      border: 5px solid red;
+      box-shadow: 0 0 10px rgba(255,0,0,0.8);
+      object-fit: cover;
+      clip-path: path("M50% 15% C35% 0%, 0% 0%, 0% 37.5% C0% 62.5%, 50% 90%, 50% 90% C50% 90%, 100% 62.5%, 100% 37.5% C100% 0%, 65% 0%, 50% 15% Z");
+    }
+    /* -----------------------------
+       Confetti Styles
+       ----------------------------- */
+    #confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      opacity: 0.8;
+      border-radius: 50%;
+      animation: fall 3s linear forwards;
+    }
+    @keyframes fall {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Bouncing hearts container in the background -->
+  <div id="hearts-container"></div>
+  <!-- Bouncing pictures container -->
+  <div id="pictures-container"></div>
+  
+  <!-- Main content with big text and buttons -->
+  <div class="main-content">
+    <h1>YAYAYAYAYAY!!</h1>
+    <!-- "Next" button that goes to choose_date.html -->
+    <button class="button" onclick="window.location.href='choose_date.html'">Next</button>
+    <!-- "Yes" button which now acts as a back button -->
+    <button class="button" onclick="window.location.href='index.html'">Back</button>
+  </div>
+  
+  <!-- Confetti container -->
+  <div id="confetti-container"></div>
+
+  <script>
+    // Redirect the "Yes" button to go back in history.
+    document.querySelectorAll('button').forEach(function(btn) {
+      if (btn.textContent.trim().toLowerCase() === 'yes') {
+        btn.addEventListener('click', function() {
+          window.history.back();
+        });
+      }
+    });
+    
+    // Shared container dimensions (updated on window resize)
+    let containerWidth = window.innerWidth;
+    let containerHeight = window.innerHeight;
+    
+    // ----------------------------------
+    // Bouncing Hearts Simulation Setup
+    // ----------------------------------
+    
+    const heartsContainer = document.getElementById('hearts-container');
+    const numHearts = 20; // Adjust as needed
+    const hearts = [];
+
+    function createHeart() {
+      const heartElem = document.createElement('div');
+      heartElem.classList.add('heart');
+      heartElem.innerHTML = "&#10084;"; // Unicode heart symbol
+
+      // Choose a larger size randomly between 80px and 150px.
+      const size = 80 + Math.random() * 70;
+      heartElem.style.fontSize = size + "px";
+      heartElem.style.width = size + "px";
+      heartElem.style.height = size + "px";
+
+      // Position the heart entirely within the container.
+      const x = Math.random() * (containerWidth - size);
+      const y = Math.random() * (containerHeight - size);
+
+      // Assign a random starting velocity (pixels per second).
+      const vx = (Math.random() * 2 - 1) * 200;
+      const vy = (Math.random() * 2 - 1) * 200;
+
+      const heart = {
+        elem: heartElem,
+        x: x,
+        y: y,
+        vx: vx,
+        vy: vy,
+        size: size,
+        radius: size / 2
+      };
+
+      heartsContainer.appendChild(heartElem);
+      hearts.push(heart);
+    }
+
+    for (let i = 0; i < numHearts; i++) {
+      createHeart();
+    }
+    
+    // -----------------------------------
+    // Bouncing Pictures (Heart-Shaped Images)
+    // -----------------------------------
+    const pictures = [];
+    const picturesContainer = document.getElementById('pictures-container');
+    
+    // Updated filenames for the images in the Pictures folder.
+    const pictureFilenames = [
+      "Pictures/First.png",
+      "Pictures/Second.png",
+      "Pictures/Third.png",
+      "Pictures/Fourth.png",
+      "Pictures/Fifth.png"
+    ];
+
+    function createPicture(src) {
+      const imgElem = document.createElement('img');
+      imgElem.src = src;
+      imgElem.classList.add('picture');
+
+      // Choose a size randomly between 150px and 250px.
+      const size = 250 + Math.random() * 100;
+      imgElem.style.width = size + "px";
+      imgElem.style.height = size + "px";
+
+      // Position the image entirely within the container.
+      const x = Math.random() * (containerWidth - size);
+      const y = Math.random() * (containerHeight - size);
+
+      // Assign a random starting velocity.
+      const vx = (Math.random() * 2 - 1) * 150;
+      const vy = (Math.random() * 2 - 1) * 150;
+
+      const picture = {
+        elem: imgElem,
+        x: x,
+        y: y,
+        vx: vx,
+        vy: vy,
+        size: size,
+        radius: size / 2
+      };
+
+      picturesContainer.appendChild(imgElem);
+      pictures.push(picture);
+    }
+
+    // Create a picture element for each provided filename.
+    pictureFilenames.forEach(src => createPicture(src));
+    
+    // --------------------------
+    // Physics Simulation Update
+    // --------------------------
+    let lastTime;
+    function update(time) {
+      if (!lastTime) lastTime = time;
+      const deltaTime = (time - lastTime) / 1000; // seconds
+      lastTime = time;
+
+      // --- Update Hearts ---
+      for (let heart of hearts) {
+        heart.x += heart.vx * deltaTime;
+        heart.y += heart.vy * deltaTime;
+
+        // Check collision with left/right walls.
+        if (heart.x < 0) {
+          heart.x = 0;
+          heart.vx = -heart.vx;
+        } else if (heart.x + heart.size > containerWidth) {
+          heart.x = containerWidth - heart.size;
+          heart.vx = -heart.vx;
+        }
+
+        // Check collision with top/bottom walls.
+        if (heart.y < 0) {
+          heart.y = 0;
+          heart.vy = -heart.vy;
+        } else if (heart.y + heart.size > containerHeight) {
+          heart.y = containerHeight - heart.size;
+          heart.vy = -heart.vy;
+        }
+      }
+      
+      // Handle collisions among hearts.
+      for (let i = 0; i < hearts.length; i++) {
+        for (let j = i + 1; j < hearts.length; j++) {
+          const heartA = hearts[i];
+          const heartB = hearts[j];
+
+          const ax = heartA.x + heartA.radius;
+          const ay = heartA.y + heartA.radius;
+          const bx = heartB.x + heartB.radius;
+          const by = heartB.y + heartB.radius;
+
+          const dx = bx - ax;
+          const dy = by - ay;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const minDistance = heartA.radius + heartB.radius;
+
+          if (distance < minDistance && distance > 0) {
+            const overlap = (minDistance - distance) / 2;
+            const nx = dx / distance;
+            const ny = dy / distance;
+            heartA.x -= nx * overlap;
+            heartA.y -= ny * overlap;
+            heartB.x += nx * overlap;
+            heartB.y += ny * overlap;
+
+            // Adjust velocities for an elastic collision.
+            const dvx = heartA.vx - heartB.vx;
+            const dvy = heartA.vy - heartB.vy;
+            const dot = dvx * nx + dvy * ny;
+            if (dot < 0) {
+              heartA.vx -= dot * nx;
+              heartA.vy -= dot * ny;
+              heartB.vx += dot * nx;
+              heartB.vy += dot * ny;
+            }
+          }
+        }
+      }
+      
+      // Apply heart positions.
+      for (let heart of hearts) {
+        heart.elem.style.transform = `translate(${heart.x}px, ${heart.y}px)`;
+      }
+      
+      // --- Update Pictures ---
+      for (let picture of pictures) {
+        picture.x += picture.vx * deltaTime;
+        picture.y += picture.vy * deltaTime;
+
+        // Collision with left/right walls.
+        if (picture.x < 0) {
+          picture.x = 0;
+          picture.vx = -picture.vx;
+        } else if (picture.x + picture.size > containerWidth) {
+          picture.x = containerWidth - picture.size;
+          picture.vx = -picture.vx;
+        }
+
+        // Collision with top/bottom walls.
+        if (picture.y < 0) {
+          picture.y = 0;
+          picture.vy = -picture.vy;
+        } else if (picture.y + picture.size > containerHeight) {
+          picture.y = containerHeight - picture.size;
+          picture.vy = -picture.vy;
+        }
+      }
+      
+      // Handle collisions among pictures.
+      for (let i = 0; i < pictures.length; i++) {
+        for (let j = i + 1; j < pictures.length; j++) {
+          const picA = pictures[i];
+          const picB = pictures[j];
+
+          const ax = picA.x + picA.radius;
+          const ay = picA.y + picA.radius;
+          const bx = picB.x + picB.radius;
+          const by = picB.y + picB.radius;
+
+          const dx = bx - ax;
+          const dy = by - ay;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const minDistance = picA.radius + picB.radius;
+          
+          if (distance < minDistance && distance > 0) {
+            const overlap = (minDistance - distance) / 2;
+            const nx = dx / distance;
+            const ny = dy / distance;
+            picA.x -= nx * overlap;
+            picA.y -= ny * overlap;
+            picB.x += nx * overlap;
+            picB.y += ny * overlap;
+
+            const dvx = picA.vx - picB.vx;
+            const dvy = picA.vy - picB.vy;
+            const dot = dvx * nx + dvy * ny;
+            if (dot < 0) {
+              picA.vx -= dot * nx;
+              picA.vy -= dot * ny;
+              picB.vx += dot * nx;
+              picB.vy += dot * ny;
+            }
+          }
+        }
+      }
+      
+      // Apply picture positions.
+      for (let picture of pictures) {
+        picture.elem.style.transform = `translate(${picture.x}px, ${picture.y}px)`;
+      }
+
+      requestAnimationFrame(update);
+    }
+    
+    requestAnimationFrame(update);
+
+    // Adjust container dimensions on window resize.
+    window.addEventListener('resize', function() {
+      containerWidth = window.innerWidth;
+      containerHeight = window.innerHeight;
+    });
+
+    // --------------------------
+    // Confetti Effect and Audio on Load
+    // --------------------------
+    function spawnConfetti(numPieces) {
+      const container = document.getElementById('confetti-container');
+      for (let i = 0; i < numPieces; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.width = (5 + Math.random() * 10) + 'px';
+        confetti.style.height = (5 + Math.random() * 10) + 'px';
+        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.top = '-10px';
+        confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+        container.appendChild(confetti);
+        // Remove confetti after animation ends.
+        confetti.addEventListener('animationend', () => {
+          confetti.remove();
+        });
+      }
+    }
+
+    window.addEventListener('load', function() {
+      // Play "Yippie.mp3" pitched down
+      
+
+      // Spawn 100 confetti pieces
+      spawnConfetti(100);
+    });
+  </script>
+</body>
+</html>

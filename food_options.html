@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>What food you wanna eat?</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin-top: 50px;
+      padding: 20px;
+      color: white; /* All text in the body will be white */
+    }
+    /* Make the top text (h1) bigger */
+    h1 {
+      font-size: 72px;
+      margin-bottom: 30px;
+    }
+    /* Increase label text size and adjust spacing */
+    .option label {
+      font-size: 50px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .option {
+      display: inline-block;
+      margin: 20px;
+      text-align: center;
+    }
+    /* All option images fixed at 400x400 with reduced margin-bottom */
+    .option img {
+      width: 400px;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      margin: 0 auto 5px;
+    }
+    /* Larger, transparent-ish checkboxes */
+    input[type="checkbox"] {
+      transform: scale(2.5);
+      margin-right: 10px;
+      vertical-align: middle;
+      opacity: 0.6; /* Makes the checkboxes semi-transparent */
+    }
+    /* Increased Next button styling */
+    button {
+      font-size: 48px;
+      padding: 24px 40px;
+      margin: 10px auto;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 500px;
+      box-sizing: border-box;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    /* Other option styling */
+    .other-option {
+      margin-top: 20px;
+    }
+    .other-option label {
+      font-size: 40px;
+    }
+    .other-option input[type="text"] {
+      font-size: 36px;
+      padding: 20px;
+      margin: 10px auto;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      width: 500px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+      color: white; /* Ensure that the text inside the input is white */
+      background-color: transparent;
+    }
+    .other-option input[type="text"]:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+    /* Placeholder text styling */
+    .other-option input[type="text"]::placeholder {
+      color: white;
+    }
+    /* Define a class for the glowing outline */
+    img.selected {
+      outline: 7px solid limegreen;
+      box-shadow: 0 0 15px limegreen;
+    }
+    /* Green glowing outline around the picture when its checkbox is selected */
+    label:has(input[type="checkbox"]:checked) img {
+      outline: 7px solid limegreen;
+      box-shadow: 0 0 15px limegreen;
+    }
+  </style>
+</head>
+<body>
+  <h1>What food you wanna eat?</h1>
+  <form id="foodOptionsForm">
+    <div class="option">
+      <label>
+        <img src="https://thegirlinspired.com/wp-content/uploads/2024/11/southern-fried-chicken-recipe-card.jpg" alt="Fried Chicken">
+        <input type="checkbox" name="foodOptions" value="Fried Chicken"> Fried Chicken
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://qph.cf2.quoracdn.net/main-qimg-8bbbca0a4208544894e1516a733a9d42-lq" alt="Hotdog">
+        <input type="checkbox" name="foodOptions" value="Hotdog"> Hotdog
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://www.budgetbytes.com/wp-content/uploads/2022/04/Teriyaki-Chicken-plate.jpg" alt="Korean Food">
+        <input type="checkbox" name="foodOptions" value="Korean Food"> Korean Food
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://www.yummytummyaarthi.com/wp-content/uploads/2022/11/red-sauce-pasta-1-500x500.jpg" alt="Pasta">
+        <input type="checkbox" name="foodOptions" value="Pasta"> Pasta
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://www.allrecipes.com/thmb/aefJMDXKqs42oAP71dQuYf_-Qdc=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/6776_Pizza-Dough_ddmfs_4x3_1724-fd91f26e0bd6400a9e89c6866336532b.jpg" alt="Pizza">
+        <input type="checkbox" name="foodOptions" value="Pizza"> Pizza
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://cdn.loveandlemons.com/wp-content/uploads/2024/12/caesar-salad.jpg" alt="Salad">
+        <input type="checkbox" name="foodOptions" value="Salad"> Salad
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://thebigmansworld.com/wp-content/uploads/2023/07/sirloin-steak-recipe.jpg" alt="Steak">
+        <input type="checkbox" name="foodOptions" value="Steak"> Steak
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://culturedtable.com/wp-content/uploads/2022/10/sushi-1024x1024.jpg" alt="Sushi">
+        <input type="checkbox" name="foodOptions" value="Sushi"> Sushi
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://www.allrecipes.com/thmb/_HarMuXPTsz7RboeH1swlZaRGQI=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/217193cheddar-bacon-mac-and-cheeseFranceC4x2-0226785f26094eb291deb3ca8afd8693.jpg" alt="Mac n Cheese">
+        <input type="checkbox" name="foodOptions" value="Mac n Cheese"> Mac n Cheese
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://i1.wp.com/lmld.org/wp-content/uploads/2019/07/Cherry-Chocolate-Chip-Ice-Cream-7.jpg" alt="Ice Cream">
+        <input type="checkbox" name="foodOptions" value="Ice Cream"> Ice Cream
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://www.connoisseurusveg.com/wp-content/uploads/2024/04/black-beans-mexican-rice-sq.jpg" alt="Rice and Beans">
+        <input type="checkbox" name="foodOptions" value="Rice and Beans"> Rice and Beans
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://www.thecookierookie.com/wp-content/uploads/2024/05/street-tacos-recipe-2.jpg" alt="Super Spicy Tacos">
+        <input type="checkbox" name="foodOptions" value="Super Spicy Tacos"> Super Spicy Tacos
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://easyweeknightrecipes.com/wp-content/uploads/2024/05/Buffalo-Wings_0009.jpg" alt="Buffalo Wings">
+        <input type="checkbox" name="foodOptions" value="Buffalo Wings"> Buffalo Wings
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://cdn.loveandlemons.com/wp-content/uploads/2024/08/chocolate-chip-cookie-recipe.jpg" alt="Cookies">
+        <input type="checkbox" name="foodOptions" value="Cookies"> Cookies
+      </label>
+    </div>
+    <br>
+    <button type="submit">Next</button>
+    <div class="other-option">
+      <label for="otherFoodInput">Other: </label>
+      <input type="text" id="otherFoodInput" placeholder="Yummy Food">
+    </div>
+  </form>
+  <script>
+    document.getElementById('foodOptionsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      let selectedFoods = [];
+      document.querySelectorAll('input[name="foodOptions"]:checked').forEach(function(checkbox) {
+        selectedFoods.push(checkbox.value);
+      });
+      let otherFood = document.getElementById('otherFoodInput').value.trim();
+      if (otherFood.length > 0) {
+        selectedFoods.push(otherFood);
+      }
+      localStorage.setItem('foodOptions', JSON.stringify(selectedFoods));
+      window.location.href = "final_thankyou.html";
+    });
+  </script>
+</body>
+</html>

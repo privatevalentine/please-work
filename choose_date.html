@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Choose a Date</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      /* Removed background-color: pink; so the global background applies */
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin-top: 100px;
+      padding: 20px;
+    }
+    /* Make the heading text white */
+    h1 {
+      color: #FFF;
+    }
+    /* Make the image more responsive and wider */
+    img {
+      width: 90%;
+      max-width: 500px;
+      height: auto;
+      margin: 20px auto;
+      display: block;
+    }
+    /* Responsive styling for the date input */
+    input[type="date"] {
+      font-size: 24px;
+      padding: 12px;
+      margin: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-sizing: border-box;
+      background-color: #00000089; /* Black background */
+      color: #ffffff;            /* White text */
+      border: none;
+      border-radius: 8px;     /* Optional: add rounded corners */
+    }
+    /* Updated Next button styling */
+    button {
+      font-size: 24px;
+      padding: 12px 20px;
+      background-color: rgb(47, 136, 50);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 90%;
+      max-width: 500px;
+      box-sizing: border-box;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    /* Adjust margins for smaller screens */
+    @media (max-width: 600px) {
+      body {
+        margin-top: 50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Choose a Date You’re Free</h1>
+  <!-- A sample image (e.g., a calendar) -->
+  <img src="https://static.vecteezy.com/system/resources/thumbnails/009/306/117/small_2x/calendar-icon-clipart-design-illustration-free-png.png" alt="Calendar">
+  <form id="dateForm">
+    <input type="date" id="freeDate" required>
+    <br>
+    <button type="submit">Next</button>
+  </form>
+  <script>
+    document.getElementById('dateForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const freeDate = document.getElementById('freeDate').value;
+      localStorage.setItem('freeDate', freeDate);
+      window.location.href = "date_options.html";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- Responsive viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris Mode - Do You Want to Be My Valentine?</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* New styling for the win message */
+    #winMessage {
+      position: fixed;
+      top: 1%;
+      left: 33%;
+      transform: translateX(-2%);
+      font-size: 22px;
+      color: rgb(255, 255, 255);
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px 10px;
+      border-radius: 5px;
+      z-index: 120;
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+    /* Score counter */
+    #scoreCounter {
+      position: fixed;
+      left: 10px;
+      top: 10px;
+      font-size: 24px;
+      color: rgb(255, 255, 255);
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 110;
+    }
+    /* Tetris container */
+    #tetrisContainer {
+      border: 2px solid #bfbfbf;
+      background: url("Pictures/First.png") no-repeat center center;
+      background-size: cover;
+      position: relative;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .tetrisBlock {
+      position: absolute;
+      background-color: red;
+      color: white;
+      text-align: center;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+    }
+    /* Tetris controls container */
+    #tetrisControls {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 60px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    #tetrisControls button {
+      position: absolute;
+      font-size: 24px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    /* Fixed positions for controls using CSS percentages */
+    #leftBtn { left: 10%; top: 0; }
+    #centerBtn { left: 40%; top: 0; }
+    #rightBtn { left: 70%; top: 0; }
+    /* Debug buttons styles */
+    #debugButtons {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      z-index: 120;
+      background-color: rgba(255,255,255,0.8);
+      padding: 5px;
+      border-radius: 5px;
+    }
+    #debugButtons button {
+      margin-right: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+    }
+    /* Define CSS variables for left/right button colors */
+    :root {
+      --side-button-bg: #c6239e;      /* Change this hex to update left/right button background */
+      --side-button-outline: #7b137b; /* Change this hex to update left/right button outline */
+    }
+
+    /* Override styling for left/right control buttons regardless of inline JS styles */
+    #tetrisControls button[data-role="left"],
+    #tetrisControls button[data-role="right"] {
+      background-color: var(--side-button-bg) !important;
+      border: 2px solid var(--side-button-outline) !important;
+      color: white !important;
+    }
+
+    /* Force board blocks with a green background (Yes) to have a darker green border */
+    #tetrisContainer .tetrisBlock[style*="green"] {
+      border: 2px solid darkgreen !important;
+    }
+    
+    /* Force board blocks with a red background (No) to have a darker red border */
+    #tetrisContainer .tetrisBlock[style*="red"] {
+      border: 2px solid darkred !important;
+    }
+
+    /* Row elimination flashing: if a block's inline style sets its background-color to white,
+       force its opacity to 50% */
+    #tetrisContainer .tetrisBlock[style*="background-color: white"] {
+      opacity: 0.5 !important;
+    }
+
+    /* Falling Yes pieces at the end: when in the final stage,
+       add the "final-stage" class to #tetrisContainer to force Yes pieces (green)
+       to have 50% opacity (making them appear with a translucent, dark-green look) */
+    #tetrisContainer.final-stage .tetrisBlock[style*="green"] {
+      opacity: 0.5 !important;
+    }
+
+    /* Little NO pieces for the explosion effect */
+    .littleNo {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-color: red;
+      color: white;
+      font-size: 20px;
+      text-align: center;
+      line-height: 40px;
+      border: 2px solid darkred;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="winMessage">Reach Score 500 to Win</div>
+  <div id="scoreCounter">Score: 0</div>
+  <div id="tetrisContainer"></div>
+  <div id="tetrisControls">
+    <button id="leftBtn">Left</button>
+    <button id="centerBtn">Yes</button>
+    <button id="rightBtn">Right</button>
+  </div>
+  
+  <!-- Valentine message placed below the buttons, moved lower -->
+  <div id="valentineMessage" style="text-align:center; margin-top:20px;">
+    <span style="display:inline-block; padding:6px 12px; background:transparent; color:rgb(245, 0, 245); font-size:44px; -webkit-text-stroke: 1px darkmagenta;">
+      Do you want to be my valentine?
+    </span>
+  </div>
+  
+  <!-- Debug buttons for playtesting: set score to 400 or 500 -->
+  <!--
+  <div id="debugButtons">
+    <button id="score400Button">Set Score to 400</button>
+    <button id="score500Button">Set Score to 500</button>
+  </div>
+  -->
+  
+  <!-- Audio elements -->
+  <audio id="tetrisAudio" src="Sounds/Tetristrack.mp3" loop></audio>
+  <audio id="rowCompletedAudio" src="Sounds/Rowcompleted.mp3"></audio>
+  <audio id="score500Audio" src="Sounds/Score500.mp3" loop></audio>
+  <audio id="explodeAudio" src="Sounds/Explosion.mp3"></audio>
+  <audio id="popSoundAudio" src="Sounds/PopSound.mp3"></audio>
+  
+  <script>
+    // Global variables for row flashing.
+    let flashingRows = [];
+    let flashOn = false;
+    
+    // Global flag to track when a row-clearing animation is in progress.
+    let clearingRows = false;
+    
+    // Global flag to track when a final clear animation has started.
+    let finalAnimationStarted = false;
+    
+    // Board settings.
+    const boardCols = 6, boardRows = 8;
+    // Compute blockSize as the minimum of (viewport width per column) and (60% of viewport height / boardRows)
+    const blockSize = Math.min(window.innerWidth / boardCols, (window.innerHeight * 0.6) / boardRows);
+    const boardWidth = boardCols * blockSize;
+    const boardHeight = boardRows * blockSize;
+    const tetrisContainer = document.getElementById('tetrisContainer');
+    tetrisContainer.style.width = boardWidth + "px";
+    tetrisContainer.style.height = boardHeight + "px";
+    
+    // Score counter.
+    const scoreCounter = document.getElementById('scoreCounter');
+    let score = 0;
+    let score500Played = false;
+    function updateScore() {
+      scoreCounter.textContent = "Score: " + score;
+      updateBackground(score);
+      
+      // Once you hit 500 points, stop the track music.
+      if (score >= 500) {
+        const tetrisAudio = document.getElementById('tetrisAudio');
+        if (!tetrisAudio.paused) {
+          tetrisAudio.pause();
+        }
+        return; // Skip updating the playback rate further.
+      }
+      
+      // Update the playback rate based on the current score.
+      let newRate;
+      if (score < 100) {
+        newRate = 0.5;
+      } else if (score < 200) {
+        newRate = 0.75;
+      } else if (score < 300) {
+        newRate = 1.0;
+      } else if (score < 400) {
+        newRate = 1.25;
+      } else {
+        newRate = 1.5;
+      }
+      document.getElementById('tetrisAudio').playbackRate = newRate;
+    }
+    updateScore();
+    
+    // Initialize board grid.
+    let board = [];
+    for(let r = 0; r < boardRows; r++){
+      board[r] = [];
+      for(let c = 0; c < boardCols; c++){
+        board[r][c] = null;
+      }
+    }
+    
+    // Falling piece state.
+    let fallingCol = Math.floor(Math.random() * boardCols);
+    let fallingY = 0;
+    let fallingActive = true;
+    
+    const baseGravity = 200; // pixels per second
+    // Dynamic gravity: gravity = baseGravity + (score/100)*40
+    
+    const tetrisAudio = document.getElementById('tetrisAudio');
+    tetrisAudio.volume = 0.5;
+    // Attempt to play audio on first user gesture; some browsers require it.
+    
+    document.addEventListener('click', () => {
+      tetrisAudio.play().catch(e => console.error('Audio play error:', e));
+    }, { once: true });
+    
+    // Control buttons.
+    const leftBtn = document.getElementById('leftBtn');
+    const centerBtn = document.getElementById('centerBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    
+    // Set initial roles – center button starts as green "Yes".
+    centerBtn.dataset.role = "yes";
+    centerBtn.style.backgroundColor = "green";
+    centerBtn.style.color = "white";
+    centerBtn.style.border = "2px solid darkgreen"; // Added dark green outline
+
+    leftBtn.dataset.role = "left";
+    leftBtn.style.backgroundColor = "deeppink"; // Darker pink background
+    leftBtn.style.color = "magenta";           // Magenta text
+    leftBtn.style.border = "2px solid magenta";  // Magenta outline
+
+    rightBtn.dataset.role = "right";
+    rightBtn.style.backgroundColor = "deeppink"; // Darker pink background
+    rightBtn.style.color = "magenta";            // Magenta text
+    rightBtn.style.border = "2px solid magenta";   // Magenta outline
+    
+    // Save initial control positions from their CSS (as set in the style block).
+    const controlPositions = {
+      left: { left: leftBtn.style.left, top: leftBtn.style.top },
+      center: { left: centerBtn.style.left, top: centerBtn.style.top },
+      right: { left: rightBtn.style.left, top: rightBtn.style.top }
+    };
+    
+    // Attach event listeners.
+    [leftBtn, centerBtn, rightBtn].forEach(btn => {
+      btn.addEventListener('click', handleControlButtonClick);
+    });
+    
+    function handleControlButtonClick(e) {
+      const btn = e.currentTarget;
+      // If clicked button already has role "yes", redirect.
+      if(btn.dataset.role === "yes"){
+        tetrisAudio.pause();
+        window.location.href = "first_thankyou.html";
+        return;
+      }
+      // Otherwise, if left/right, update falling piece position.
+      if(btn.dataset.role === "left"){
+        if(fallingCol > 0 && board[Math.floor(fallingY / blockSize)][fallingCol - 1] === null){
+          fallingCol--;
+        }
+      } else if(btn.dataset.role === "right"){
+        if(fallingCol < boardCols - 1 && board[Math.floor(fallingY / blockSize)][fallingCol + 1] === null){
+          fallingCol++;
+        }
+      }
+      // Only reorder controls (i.e. change roles) if score is at least 300.
+      if(score >= 300){
+        reorderControls(btn);
+      }
+    }
+    
+    function reorderControls(clickedButton) {
+      // Move the clicked button to the center position.
+      clickedButton.dataset.role = "yes";
+      clickedButton.textContent = "Yes";
+      clickedButton.style.left = controlPositions.center.left;
+      clickedButton.style.top = controlPositions.center.top;
+      clickedButton.style.backgroundColor = "green";
+      clickedButton.style.color = "white";
+      clickedButton.style.border = "2px solid darkgreen"; // Dark green outline for Yes button
+      
+      // For the other two buttons, randomly assign left/right positions.
+      const buttons = [leftBtn, centerBtn, rightBtn];
+      const others = buttons.filter(b => b !== clickedButton);
+      if(Math.random() < 0.5) {
+        others[0].dataset.role = "left";
+        others[0].textContent = "Left";
+        others[0].style.left = controlPositions.left.left;
+        others[0].style.top = controlPositions.left.top;
+        others[0].style.backgroundColor = "deeppink"; // Darker pink
+        others[0].style.color = "magenta";           // Magenta text
+        others[0].style.border = "2px solid magenta";  // Magenta outline
+        
+        others[1].dataset.role = "right";
+        others[1].textContent = "Right";
+        others[1].style.left = controlPositions.right.left;
+        others[1].style.top = controlPositions.right.top;
+        others[1].style.backgroundColor = "deeppink";
+        others[1].style.color = "magenta";
+        others[1].style.border = "2px solid magenta";
+      } else {
+        others[0].dataset.role = "right";
+        others[0].textContent = "Right";
+        others[0].style.left = controlPositions.right.left;
+        others[0].style.top = controlPositions.right.top;
+        others[0].style.backgroundColor = "deeppink";
+        others[0].style.color = "magenta";
+        others[0].style.border = "2px solid magenta";
+        
+        others[1].dataset.role = "left";
+        others[1].textContent = "Left";
+        others[1].style.left = controlPositions.left.left;
+        others[1].style.top = controlPositions.left.top;
+        others[1].style.backgroundColor = "deeppink";
+        others[1].style.color = "magenta";
+        others[1].style.border = "2px solid magenta";
+      }
+    }
+    
+    function renderBoard() {
+      tetrisContainer.innerHTML = "";
+      
+      // Render fixed board blocks.
+      for (let r = 0; r < boardRows; r++){
+        for (let c = 0; c < boardCols; c++){
+          if (board[r][c]) {
+            const block = document.createElement("div");
+            block.className = "tetrisBlock";
+            block.style.left = (c * blockSize) + "px";
+            block.style.top = (r * blockSize) + "px";
+            block.style.width = blockSize + "px";
+            block.style.height = blockSize + "px";
+            block.style.fontSize = (blockSize * 0.4) + "px";
+            block.style.lineHeight = blockSize + "px";
+            if (flashingRows.includes(r) && flashOn){
+              block.style.backgroundColor = "white";
+              block.style.color = "black";
+            } else if (board[r][c] === "yes") {
+              block.style.backgroundColor = "green";
+              block.style.color = "white";
+              block.textContent = "Yes";
+            } else {
+              block.style.backgroundColor = "red";
+              block.style.color = "white";
+              block.textContent = "No";
+              block.style.border = "2px solid darkred"; // Dark red outline for red blocks.
+            }
+            tetrisContainer.appendChild(block);
+          }
+        }
+      }
+      // Render the regular falling piece if active.
+      if (fallingActive){
+        const piece = document.createElement("div");
+        piece.className = "tetrisBlock";
+        piece.style.left = (fallingCol * blockSize) + "px";
+        piece.style.top = fallingY + "px";
+        piece.style.width = blockSize + "px";
+        piece.style.height = blockSize + "px";
+        piece.style.fontSize = (blockSize * 0.4) + "px";
+        piece.style.lineHeight = blockSize + "px";
+        piece.textContent = "No";
+        piece.style.border = "2px solid darkred"; // Dark red outline for the falling NO piece.
+        tetrisContainer.appendChild(piece);
+      }
+      // Render all falling final YES pieces.
+      if (finalStageActive) {
+        finalPieces.forEach(piece => {
+          const finalPiece = document.createElement("div");
+          finalPiece.className = "tetrisBlock";
+          finalPiece.style.left = (piece.col * blockSize) + "px";
+          finalPiece.style.top = piece.y + "px";
+          finalPiece.style.width = blockSize + "px";
+          finalPiece.style.height = blockSize + "px";
+          finalPiece.style.fontSize = (blockSize * 0.4) + "px";
+          finalPiece.style.lineHeight = blockSize + "px";
+          finalPiece.style.backgroundColor = "green";
+          finalPiece.style.color = "white";
+          finalPiece.textContent = "Yes";
+          tetrisContainer.appendChild(finalPiece);
+        });
+      }
+    }
+    
+    function checkLanding() {
+      let fallingRow = Math.floor(fallingY / blockSize);
+      if(fallingRow >= boardRows - 1) return true;
+      if(board[fallingRow + 1][fallingCol]) {
+        // Land if the falling piece's top reaches within 10% of the next cell's top.
+        if(fallingY >= (fallingRow + 1) * blockSize - (blockSize * 0.95)) return true;
+      }
+      return false;
+    }
+    
+    function fixPiece() {
+      let landingRow = Math.floor(fallingY / blockSize);
+      board[landingRow][fallingCol] = true;
+      fallingActive = false;
+    }
+    
+    function getCompletedRows() {
+      let completeRows = [];
+      for(let r = 0; r < boardRows; r++){
+        let complete = true;
+        for(let c = 0; c < boardCols; c++){
+          if(!board[r][c]){
+            complete = false;
+            break;
+          }
+        }
+        if(complete) completeRows.push(r);
+      }
+      return completeRows;
+    }
+    
+    function clearCompletedRows() {
+      const completeRows = getCompletedRows();
+      if (completeRows.length > 0) {
+        clearingRows = true; // Prevent updating the falling piece while rows are clearing.
+        flashAndClearRows(completeRows);
+        return true;
+      }
+      return false;
+    }
+    
+    function flashAndClearRows(rowsToClear) {
+      document.getElementById('rowCompletedAudio').play();
+      flashingRows = rowsToClear.slice();
+      let flashCount = 0;
+      const maxFlashes = 4;
+      const flashInterval = 200;
+      const intervalId = setInterval(() => {
+        flashOn = !flashOn;
+        flashCount++;
+        renderBoard();
+        if (flashCount >= maxFlashes) {
+          clearInterval(intervalId);
+          // Collapse the board in one single move.
+          let writeRow = boardRows - 1;
+          for (let r = boardRows - 1; r >= 0; r--) {
+            if (!rowsToClear.includes(r)) {
+              board[writeRow] = board[r].slice();
+              writeRow--;
+            }
+          }
+          // Fill the remaining top rows with empty values.
+          for (let r = writeRow; r >= 0; r--) {
+            board[r] = new Array(boardCols).fill(null);
+          }
+          score += 100 * rowsToClear.length;
+          updateScore();
+          flashingRows = [];
+          renderBoard();
+          clearingRows = false; // Re-enable falling piece updates.
+          if (checkGameOver()) {
+            gameOver();
+            return;
+          } else {
+            // If we've reached or exceeded 500 points, run the final clear.
+            if (score >= 500 && !finalAnimationStarted) {
+              finalAnimationStarted = true;
+              finalClearBoard();
+            } else if (score < 500) {
+              spawnNewPiece();
+            }
+          }
+        }
+      }, flashInterval);
+    }
+    
+    function checkGameOver() {
+      for(let c = 0; c < boardCols; c++){
+        if(board[0][c]) return true;
+      }
+      return false;
+    }
+    
+    function gameOver() {
+      // Pause the main Tetris track audio.
+      tetrisAudio.pause();
+      
+      // Create the Game Over audio element.
+      const gameOverAudio = new Audio("Sounds/Gameover.mp3");
+      
+      // Set up the Web Audio API to boost playback volume.
+      // Note: The volume property on audio elements is clamped between 0 and 1, so instead we
+      // use an AudioContext and a GainNode to amplify the sound.
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const track = audioContext.createMediaElementSource(gameOverAudio);
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 2.0;  // Boost volume to 200%.
+      
+      // Connect the audio element through the gain node to the destination (speakers).
+      track.connect(gainNode).connect(audioContext.destination);
+      
+      // Play the Game Over sound.
+      gameOverAudio.play().catch(e => {
+         console.error("Error playing Gameover audio:", e);
+      });
+      
+      // Wait 2 seconds before redirecting back to the index page.
+      setTimeout(() => {
+         window.location.href = "index.html";
+      }, 3500);
+    }
+    
+    function spawnNewPiece() {
+      fallingCol = Math.floor(Math.random() * boardCols);
+      fallingY = 0;
+      fallingActive = true;
+    }
+    
+    let lastTetrisTime = null;
+    function tetrisAnimate(timestamp) {
+      if (!lastTetrisTime) lastTetrisTime = timestamp;
+      const dt = (timestamp - lastTetrisTime) / 1000;
+      lastTetrisTime = timestamp;
+      const gravity = baseGravity + (score / 100) * 40;
+      
+      // Only update the regular falling piece if not in final stage.
+      if (fallingActive && !clearingRows && !finalStageActive) {
+        fallingY += gravity * dt;
+        if (checkLanding()) {
+          fallingY = Math.floor(fallingY / blockSize) * blockSize;
+          fixPiece();
+          if (!clearCompletedRows()) {
+            if (checkGameOver()) {
+              gameOver();
+              return;
+            } else {
+              if (score >= 500 && !finalAnimationStarted) {
+                finalAnimationStarted = true;
+                finalClearBoard();
+              } else if (score < 500) {
+                spawnNewPiece();
+              }
+            }
+          }
+        }
+      }
+      
+      // --- FINAL STAGE: Update falling YES blocks with collision detection ---
+      if (finalStageActive) {
+        let updatedFinalPieces = [];
+        finalPieces.forEach(piece => {
+          let newY = piece.y + piece.speed * dt;
+          let currentRow = Math.floor(piece.y / blockSize);
+          let newRow = Math.floor(newY / blockSize);
+          
+          // If the piece crosses into a new row, check collision.
+          if (newRow > currentRow) {
+            // Check if we've reached the bottom or the cell below is occupied.
+            if (currentRow + 1 >= boardRows || board[currentRow + 1][piece.col] !== null) {
+              // Land the piece.
+              piece.y = currentRow * blockSize;
+              board[currentRow][piece.col] = "yes";
+              return; // Do not add this piece back into updatedFinalPieces.
+            }
+          }
+          
+          // Also, if the piece would go off the bottom.
+          if (newY > boardHeight - blockSize) {
+            piece.y = boardHeight - blockSize;
+            board[boardRows - 1][piece.col] = "yes";
+            return;
+          }
+          
+          piece.y = newY;
+          updatedFinalPieces.push(piece);
+        });
+        finalPieces = updatedFinalPieces;
+      }
+      
+      renderBoard();
+      requestAnimationFrame(tetrisAnimate);
+    }
+    requestAnimationFrame(tetrisAnimate);
+    
+    // New function: when score reaches 500, stop spawning new pieces,
+    // hide the buttons, and flash all remaining blocks before clearing them.
+    function finalClearBoard() {
+      // Prevent further movement of the falling piece.
+      fallingActive = false;
+      
+      // Hide the control and debug buttons.
+      const controlsEl = document.getElementById('tetrisControls');
+      const debugEl = document.getElementById('debugButtons');
+      if (controlsEl) controlsEl.style.display = 'none';
+      if (debugEl) debugEl.style.display = 'none';
+
+      // Determine rows that contain any blocks.
+      let rowsToClear = [];
+      for (let r = 0; r < boardRows; r++) {
+        if (board[r].some(cell => cell !== null)) {
+          rowsToClear.push(r);
+        }
+      }
+      
+      // Set flashingRows so that the renderBoard() function will render these rows in flash mode.
+      flashingRows = rowsToClear.slice();
+
+      let flashCount = 0;
+      const maxFlashes = 4;
+      const flashInterval = 200;
+      
+      // Start the flashing animation.
+      const intervalId = setInterval(() => {
+        flashOn = !flashOn;
+        flashCount++;
+        renderBoard();
+        
+        if (flashCount >= maxFlashes) {
+          clearInterval(intervalId);
+          
+          // After flashing, clear all rows.
+          for (let r = 0; r < boardRows; r++) {
+            board[r] = new Array(boardCols).fill(null);
+          }
+          
+          // Reset flashing state and update board.
+          flashingRows = [];
+          renderBoard();
+          
+          // Final animation complete.
+          // (Optionally, you might display a message such as "Victory!")
+        }
+      }, flashInterval);
+      startFinalStage();
+    }
+
+    // --- NEW GLOBAL VARIABLES FOR FINAL STAGE ---
+    let finalStageActive = false;
+    let finalPieces = [];
+    let spawnFinalPieceInterval;
+
+    // --- MODIFY startFinalStage FUNCTION ---
+    // After clearing the board in finalClearBoard, show a centered Big red NO button,
+    // then start spawning green YES pieces.
+    function startFinalStage() {
+      // Play the score500 audio if applicable.
+      if (score >= 500) {
+        document.getElementById('score500Audio').play();
+        score500Played = true;
+      }
+      const controlsEl = document.getElementById('tetrisControls');
+      controlsEl.style.display = 'block';
+      controlsEl.innerHTML = ""; // Clear any existing buttons
+      
+      // Create the Big red NO button and center it.
+      const bigRedNoBtn = document.createElement("button");
+      bigRedNoBtn.textContent = "NO";
+      bigRedNoBtn.style.backgroundColor = "red";
+      bigRedNoBtn.style.color = "white";
+      bigRedNoBtn.style.fontSize = "32px";
+      bigRedNoBtn.style.padding = "20px 40px";
+      bigRedNoBtn.style.position = "absolute";
+      bigRedNoBtn.style.left = "50%";
+      bigRedNoBtn.style.top = "0";
+      bigRedNoBtn.style.transform = "translateX(-50%)";
+      bigRedNoBtn.style.border = "2px solid darkred"; // Dark red outline for Big NO button
+      bigRedNoBtn.style.zIndex = "1000"; // Ensure the button is on top.
+      controlsEl.appendChild(bigRedNoBtn);
+      
+      // Attach the new explosion trigger on click.
+      bigRedNoBtn.addEventListener("click", function(){
+        console.log("Big NO button clicked, triggering explosion.");
+        triggerExplosion(bigRedNoBtn);
+      });
+      
+      // Activate the fast spawning of green YES pieces.
+      finalStageActive = true;
+      spawnFinalPieceInterval = setInterval(() => {
+        spawnFinalYesPiece();
+      }, 100); // Adjust spawn rate as needed.
+    }
+
+    // --- spawnFinalYesPiece FUNCTION ---
+    // This creates a new falling YES piece; collision will be handled in tetrisAnimate.
+    function spawnFinalYesPiece() {
+      const piece = {
+        col: Math.floor(Math.random() * boardCols),
+        y: 0,
+        speed: baseGravity * 3  // Falling faster than normal pieces.
+      };
+      finalPieces.push(piece);
+    }
+
+    function updateBackground(score) {
+      const container = document.getElementById('tetrisContainer');
+      let bgImage;
+
+      // Choose the background image based on score.
+      // Score 0 to 99 -> "First.png"
+      // Score 100 to 199 -> "Fourth.png"
+      // Score 200 to 299 -> "Fifth.png"
+      // Score 300 to 399 -> "Second.png"
+      // Score 400 and above -> "First.png"
+      if (score >= 400) {
+        bgImage = 'Pictures/Third.png';
+      } else if (score >= 300) {
+        bgImage = 'Pictures/Second.png';
+      } else if (score >= 200) {
+        bgImage = 'Pictures/Fifth.png';
+      } else if (score >= 100) {
+        bgImage = 'Pictures/Fourth.png';
+      } else {
+        bgImage = 'Pictures/First.png';
+      }
+
+      container.style.backgroundImage = `url("${bgImage}")`;
+    }
+
+    // --- NEW GLOBAL VARIABLES FOR EXPLOSION EFFECT ---
+    let explosionPieces = [];
+    let explosionActive = false;
+    let lastExplosionTime = null;
+
+    function animateExplosion(timestamp) {
+      if (!lastExplosionTime) lastExplosionTime = timestamp;
+      const dt = (timestamp - lastExplosionTime) / 1000;
+      lastExplosionTime = timestamp;
+      const pieceSize = 40; // Each little piece is 40x40 pixels.
+      const radius = pieceSize / 2; // Radius of 20.
+
+      if (yesLevitationActive) {
+        // In levitation mode, update only YES pieces (no wall collisions or inter-piece collisions).
+        explosionPieces.forEach(piece => {
+          if (piece.isYes) {
+            piece.x += piece.vx * dt;
+            piece.y += piece.vy * dt;
+          }
+        });
+
+        // Remove YES pieces that have completely left the top of the screen.
+        explosionPieces = explosionPieces.filter(piece => {
+          if (piece.isYes) {
+            if (piece.y + pieceSize < 0) {
+              console.log("Removing YES piece that is off-screen:", piece);
+              piece.element.remove();  // Also remove its DOM element.
+              return false;
+            }
+            return true;
+          }
+          return true;
+        });
+
+        // Update DOM positions for yes pieces.
+        explosionPieces.forEach(piece => {
+          piece.element.style.left = piece.x + "px";
+          piece.element.style.top = piece.y + "px";
+        });
+
+        // When all YES pieces are gone (and the Big Green YES button hasn't been spawned), spawn it.
+        if (explosionPieces.filter(p => p.isYes).length === 0 && !bigGreenYesSpawned) {
+          console.log("All YES pieces are off screen, spawning Big Green YES button.");
+          spawnBigGreenYesButton();
+          bigGreenYesSpawned = true;
+        }
+
+        // Always continue the animation loop until the button is spawned.
+        if (!bigGreenYesSpawned) {
+          requestAnimationFrame(animateExplosion);
+        }
+      } else {
+        // Normal mode: update positions with wall bounce and elastic collision handling.
+        explosionPieces.forEach(piece => {
+          piece.x += piece.vx * dt;
+          piece.y += piece.vy * dt;
+
+          // Bounce off left/right walls.
+          if (piece.x < 0) {
+            piece.x = 0;
+            piece.vx = -piece.vx;
+          } else if (piece.x + pieceSize > window.innerWidth) {
+            piece.x = window.innerWidth - pieceSize;
+            piece.vx = -piece.vx;
+          }
+
+          // Bounce off top/bottom walls.
+          if (piece.y < 0) {
+            piece.y = 0;
+            piece.vy = -piece.vy;
+          } else if (piece.y + pieceSize > window.innerHeight) {
+            piece.y = window.innerHeight - pieceSize;
+            piece.vy = -piece.vy;
+          }
+        });
+
+        // Check and resolve collisions between pieces.
+        for (let i = 0; i < explosionPieces.length; i++) {
+          for (let j = i + 1; j < explosionPieces.length; j++) {
+            const p1 = explosionPieces[i];
+            const p2 = explosionPieces[j];
+            const dx = (p1.x + radius) - (p2.x + radius);
+            const dy = (p1.y + radius) - (p2.y + radius);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < radius * 2 && dist > 0) {
+              const overlap = (radius * 2 - dist) / 2;
+              const nx = dx / dist;
+              const ny = dy / dist;
+              p1.x += nx * overlap;
+              p1.y += ny * overlap;
+              p2.x -= nx * overlap;
+              p2.y -= ny * overlap;
+
+              const v1n = p1.vx * nx + p1.vy * ny;
+              const v2n = p2.vx * nx + p2.vy * ny;
+              const v1t_x = p1.vx - v1n * nx;
+              const v1t_y = p1.vy - v1n * ny;
+              const v2t_x = p2.vx - v2n * nx;
+              const v2t_y = p2.vy - v2n * ny;
+              p1.vx = v2n * nx + v1t_x;
+              p1.vy = v2n * ny + v1t_y;
+              p2.vx = v1n * nx + v2t_x;
+              p2.vy = v1n * ny + v2t_y;
+            }
+          }
+        }
+
+        // Update DOM positions in normal mode.
+        explosionPieces.forEach(piece => {
+          piece.element.style.left = piece.x + "px";
+          piece.element.style.top = piece.y + "px";
+        });
+
+        if (explosionPieces.length > 0) {
+          requestAnimationFrame(animateExplosion);
+        }
+      }
+    }
+
+    function triggerExplosion(buttonElement) {
+      console.log("triggerExplosion called.");
+
+      var explodeAudio = document.getElementById('explodeAudio');
+      if (explodeAudio) {
+        explodeAudio.currentTime = 0;
+        explodeAudio.play().then(() => {
+          console.log("Explosion audio playing.");
+        }).catch(e => {
+          console.error("Error playing explodeAudio:", e);
+        });
+      } else {
+        console.error("explodeAudio element not found!");
+      }
+      
+      const rect = buttonElement.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      console.log("Explosion center at:", centerX, centerY);
+      
+      buttonElement.remove();
+      
+      if (spawnFinalPieceInterval) {
+        clearInterval(spawnFinalPieceInterval);
+        console.log("Stopped spawning final YES pieces.");
+      }
+      
+      finalStageActive = false;
+      finalPieces = [];
+      
+      spawnExplosionPieces(centerX, centerY);
+    }
+
+    function spawnExplosionPieces(originX, originY) {
+      console.log("spawnExplosionPieces called at", originX, originY);
+      explosionPieces = [];
+      const numPieces = 10;        // 10 little NO pieces.
+      const explosionSpeed = 250;  // Speed in pixels per second.
+
+      for (let i = 0; i < numPieces; i++) {
+        const pieceDiv = document.createElement("div");
+        pieceDiv.className = "littleNo";
+        pieceDiv.textContent = "NO";
+        // Position the piece at the explosion origin (adjusted by half its size).
+        pieceDiv.style.left = (originX - 20) + "px";
+        pieceDiv.style.top = (originY - 20) + "px";
+        document.body.appendChild(pieceDiv);
+
+        const angle = Math.random() * 2 * Math.PI;
+        const vx = Math.cos(angle) * explosionSpeed;
+        const vy = Math.sin(angle) * explosionSpeed;
+
+        const noPiece = {
+          element: pieceDiv,
+          x: originX - 20,
+          y: originY - 20,
+          vx: vx,
+          vy: vy,
+          isYes: false  // This is a NO piece.
+        };
+        explosionPieces.push(noPiece);
+
+        // Attach the click event for NO pieces.
+        pieceDiv.addEventListener("click", function() {
+          console.log("NO piece clicked.");
+          var popSoundAudio = document.getElementById('popSoundAudio');
+          if (popSoundAudio) {
+            popSoundAudio.currentTime = 0;
+            popSoundAudio.play().then(() => {
+              console.log("Pop sound played.");
+            }).catch(e => {
+              console.error("Error playing popSoundAudio:", e);
+            });
+          } else {
+            console.error("popSoundAudio element not found!");
+          }
+
+          // Find this piece in our explosionPieces array.
+          let index = explosionPieces.findIndex(p => p.element === pieceDiv);
+          if (index >= 0) {
+            let piece = explosionPieces[index];
+            // Capture current physics values.
+            let currentX = piece.x;
+            let currentY = piece.y;
+            let currentVx = piece.vx;
+            let currentVy = piece.vy;
+            // Remove the original NO piece.
+            pieceDiv.remove();
+            explosionPieces.splice(index, 1);
+            console.log("Removed a NO piece. Remaining NO pieces:",
+              explosionPieces.filter(p => !p.isYes).length);
+
+            // Spawn a separate YES piece (do not replace the NO piece).
+            let yesDiv = document.createElement("div");
+            yesDiv.className = "littleNo"; // Reuse the same base class.
+            yesDiv.textContent = "Yes";
+            yesDiv.style.backgroundColor = "green";
+            yesDiv.style.color = "white";
+            yesDiv.style.border = "2px solid darkgreen";
+            // Position it at the same spot.
+            yesDiv.style.left = currentX + "px";
+            yesDiv.style.top = currentY + "px";
+            document.body.appendChild(yesDiv);
+
+            let yesPiece = {
+              element: yesDiv,
+              x: currentX,
+              y: currentY,
+              vx: currentVx,
+              vy: currentVy,
+              isYes: true
+            };
+            // Attach click handler for YES piece that redirects immediately.
+            yesDiv.addEventListener("click", function() {
+              const tetrisAudio = document.getElementById('tetrisAudio');
+              if (tetrisAudio) { tetrisAudio.pause(); }
+              window.location.href = "first_thankyou.html";
+            });
+
+            explosionPieces.push(yesPiece);
+            console.log("YES piece spawned.");
+
+            // Check if any NO pieces remain.
+            const remainingNos = explosionPieces.filter(p => !p.isYes).length;
+            console.log("Remaining NO pieces:", remainingNos);
+            if (remainingNos === 0) {
+              score = 1000;
+              updateScore();
+              console.log("All NO blocks are pressed. Score set to 1000.");
+              startYesLevitation();
+            }
+          } else {
+            console.error("Could not find the clicked NO piece in explosionPieces.");
+          }
+        });
+      }
+
+      lastExplosionTime = null;
+      requestAnimationFrame(animateExplosion);
+    }
+
+    function spawnBigGreenYesButton() {
+      console.log("Spawning Big Green YES Button.");
+      const bigYesBtn = document.createElement("button");
+      bigYesBtn.textContent = "YES";
+      bigYesBtn.style.position = "fixed";
+      bigYesBtn.style.left = "50%";
+      bigYesBtn.style.top = "88.5%";  // Spawn lower than before.
+      bigYesBtn.style.transform = "translate(-50%, -50%)";
+      bigYesBtn.style.backgroundColor = "green";
+      bigYesBtn.style.color = "white";
+      bigYesBtn.style.fontSize = "48px";
+      bigYesBtn.style.padding = "30px 60px";
+      bigYesBtn.style.border = "5px solid darkgreen";
+      bigYesBtn.style.opacity = "0";
+      bigYesBtn.style.transition = "opacity 2s";
+      bigYesBtn.style.zIndex = "10000";  // Ensure it appears on top.
+      document.body.appendChild(bigYesBtn);
+
+      // Fade in the button.
+      setTimeout(() => {
+        bigYesBtn.style.opacity = "1";
+      }, 100);
+
+      // Attach a click handler that pauses game audio and redirects.
+      bigYesBtn.addEventListener("click", function() {
+        const tetrisAudio = document.getElementById('tetrisAudio');
+        if (tetrisAudio) tetrisAudio.pause();
+        window.location.href = "first_thankyou.html";
+      });
+    }
+
+    // New globals for final yes levitation mode.
+    var yesLevitationActive = false;
+    var bigGreenYesSpawned = false;
+
+    function startYesLevitation() {
+      if (!yesLevitationActive) {
+        yesLevitationActive = true;
+        console.log("Yes levitation started.");
+
+        // Play Yippie sound when all the nos turn to yes and start levitating.
+        const yippieAudio = new Audio("Sounds/Yippie.mp3");
+        yippieAudio.play().catch(e => console.error("Error playing Yippie audio:", e));
+
+        // Set constant upward velocity for all YES pieces.
+        explosionPieces.forEach(piece => {
+          if (piece.isYes) {
+            piece.vx = 0;
+            piece.vy = -200; // Increased speed for quicker upward flow.
+          }
+        });
+
+        // Adjust the valentine message upward.
+        // Set the desired offset (a negative value moves the element up).
+        const valentineTextRise = -102; // You can change this value as needed.
+        const valentineMessage = document.getElementById("valentineMessage");
+        if (valentineMessage) {
+          // Optionally, add a smooth transition if not already set via CSS.
+          valentineMessage.style.transition = "transform 1.5s ease-in-out";
+          valentineMessage.style.transform = `translateY(${valentineTextRise}px)`;
+        }
+      }
+    }
+
+    // This code will fade out the "winMessage" after 5 seconds.
+    setTimeout(() => {
+      const winMsg = document.getElementById("winMessage");
+      if (winMsg) {
+        winMsg.style.opacity = "0";
+      }
+    }, 5000);
+  </script>
+</body>
+</html>

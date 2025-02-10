@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- Responsive viewport for mobile devices -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Do You Want to Be My Valentine?</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      /* Establish a stacking context for pseudo‑elements */
+      position: relative;
+    }
+    /* Pseudo‑element holding the layered background */
+   
+    
+    h1 {
+      position: fixed;
+      top: 5%;
+      width: 100%;
+      text-align: center;
+      margin: 0;
+      font-size: 32px;
+      z-index: 100; /* Keep message on top */
+    }
+    /* INITIAL MODE BUTTONS */
+    .btn {
+      font-size: 24px;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      position: fixed;
+      border-radius: 20px; /* Added to round the buttons */
+    }
+    #yesBtn {
+      background-color: green;
+      color: white;
+    }
+    #noBtn {
+      background-color: red;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    <span style="display:inline-block; padding:6px 12px; background:transparent; color:rgb(249, 0, 249); -webkit-text-stroke: 1px rgb(124, 0, 72);">
+      Do you want to be my valentine?
+    </span>
+  </h1>
+  
+  <!-- Cat Begging Image (moved down with a top margin) -->
+  <img src="https://media.tenor.com/zGm5acSjHCIAAAAM/cat-begging.gif"
+       alt="Cat Begging"
+       style="display: block; margin: 120px auto 0 auto; border: 2px solid rgb(249, 0, 249);">
+  
+  <!-- INITIAL MODE BUTTONS -->
+  <button id="yesBtn" class="btn">Yes</button>
+  <button id="noBtn" class="btn">No</button>
+  
+  <!-- Audio element for PopSound -->
+  <audio id="popSound" src="Sounds/PopSound.mp3"></audio>
+  
+  <script>
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const popSound = document.getElementById('popSound');
+    
+    // Button dimensions and spacing (these match your assumed values)
+    const btnWidth = 100, btnHeight = 40;
+    const buttonSpacing = 20; // gap between buttons
+    const totalWidth = btnWidth * 2 + buttonSpacing;
+    // Center the whole group horizontally
+    const startX = (window.innerWidth - totalWidth) / 2;
+    // Offsets to move the buttons a little right and down
+    const offsetX = 15; // move right 20px
+    const offsetY = 50; // move down 20px
+    
+    // Position the buttons so that the "Yes" button is on the left,
+    // and the "No" button is on the right (both centered horizontally with added offsets).
+    let yesPos = { x: startX + offsetX, y: window.innerHeight / 2 - btnHeight / 2 + offsetY };
+    let redPos = { x: startX + btnWidth + buttonSpacing + offsetX, y: window.innerHeight / 2 - btnHeight / 2 + offsetY };
+    
+    yesBtn.style.left = yesPos.x + "px";
+    yesBtn.style.top = yesPos.y + "px";
+    noBtn.style.left = redPos.x + "px";
+    noBtn.style.top = redPos.y + "px";
+    
+    let noCount = 0;
+    let continuousMode = false; // becomes true after 3 clicks
+    let redVel = { x: 100, y: 100 };
+    let lastTimestamp = null;
+    
+    function isTooClose(pos1, pos2, threshold) {
+      const dx = pos1.x - pos2.x, dy = pos1.y - pos2.y;
+      return Math.sqrt(dx * dx + dy * dy) < threshold;
+    }
+    
+    function getRandomPosition() {
+      const x = Math.random() * (window.innerWidth - btnWidth);
+      const y = Math.random() * (window.innerHeight - btnHeight);
+      return { x, y };
+    }
+    
+    // When Yes button is clicked, play pop sound and redirect.
+    yesBtn.addEventListener('click', function() {
+      popSound.play();
+      window.location.href = "first_thankyou.html";
+    });
+    
+    // When No button is clicked, play pop sound.
+    noBtn.addEventListener('click', function() {
+      popSound.play();
+    });
+    
+    function animate(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+      
+      if (continuousMode) {
+        redPos.x += redVel.x * dt;
+        redPos.y += redVel.y * dt;
+        
+        if (redPos.x <= 0 || redPos.x >= window.innerWidth - btnWidth) {
+          redVel.x = -redVel.x;
+          redPos.x = Math.max(0, Math.min(redPos.x, window.innerWidth - btnWidth));
+        }
+        if (redPos.y <= 0 || redPos.y >= window.innerHeight - btnHeight) {
+          redVel.y = -redVel.y;
+          redPos.y = Math.max(0, Math.min(redPos.y, window.innerHeight - btnHeight));
+        }
+        
+        noBtn.style.left = redPos.x + "px";
+        noBtn.style.top = redPos.y + "px";
+      }
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+    
+    // Modified noBtn click handler to constrain teleport position below header for first 3 clicks.
+    noBtn.addEventListener('click', function(event) {
+      noCount++;
+      
+      // Teleport the Yes button.
+      let candidateYesPos = { x: event.clientX, y: event.clientY };
+      if (isTooClose(candidateYesPos, redPos, 100)) {
+        candidateYesPos.x = redPos.x + 120;
+        candidateYesPos.y = redPos.y + 120;
+        candidateYesPos.x = Math.min(candidateYesPos.x, window.innerWidth - btnWidth);
+        candidateYesPos.y = Math.min(candidateYesPos.y, window.innerHeight - btnHeight);
+      }
+      yesPos = candidateYesPos;
+      yesBtn.style.left = yesPos.x + "px";
+      yesBtn.style.top = yesPos.y + "px";
+      const scale = Math.pow(1.5, noCount);
+      yesBtn.style.transform = "scale(" + scale + ")";
+      
+      // Update red button's text.
+      let text = "Are you ";
+      for (let i = 1; i < noCount; i++) {
+        text += "really ";
+      }
+      text += "sure?";
+      noBtn.textContent = text;
+      
+      // Teleport the red (No) button.
+      let candidateRedPos;
+      let attempts = 0;
+      // Get the bottom position of the header text.
+      const headerRect = document.querySelector('h1').getBoundingClientRect();
+      const headerBottom = headerRect.bottom;
+      do {
+        if (noCount <= 3) {
+          const x = Math.random() * (window.innerWidth - btnWidth);
+          // Ensure the red button teleports to a position below the header text.
+          const y = headerBottom + Math.random() * ((window.innerHeight - btnHeight) - headerBottom);
+          candidateRedPos = { x, y };
+        } else {
+          candidateRedPos = getRandomPosition();
+        }
+        attempts++;
+      } while (isTooClose(candidateRedPos, yesPos, 100) && attempts < 10);
+      redPos = candidateRedPos;
+      noBtn.style.left = redPos.x + "px";
+      noBtn.style.top = redPos.y + "px";
+      
+      // Switch to continuous mode after 3 clicks.
+      if (noCount >= 3 && noCount < 7) {
+        if (!continuousMode) continuousMode = true;
+        redVel.x *= 1.4;
+        redVel.y *= 1.4;
+      }
+      
+      // Transition to Tetris mode after 7 clicks.
+      if (noCount >= 7) {
+        window.location.href = "tetris.html";
+      }
+    });
+  </script>
+  
+  <!-- Credit text -->
+  <p style="position: fixed; bottom: 1px; width: 100%; text-align: center; margin: 0; font-size: 24px; color: rgb(255, 0, 255); -webkit-text-stroke: 0.5px rgb(0, 0, 0); z-index: 100;">
+    Made by Bum Leo
+  </p>
+</body>
+</html>

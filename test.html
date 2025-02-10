@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EmailJS Minimal Test</title>
+  <!-- Try the alternate URL -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script defer>
+    window.addEventListener("DOMContentLoaded", function() {
+      // Initialize EmailJS after the script has loaded
+      emailjs.init("JxPRB9C_kRcR7gVaI");
+      console.log("EmailJS initialized:", window.emailjs);
+      
+      // Your email sending function goes here…
+    });
+  </script>
+</head>
+<body>
+  <script>
+    // Wait a moment to ensure the script loads
+    setTimeout(function() {
+      if (window.emailjs) {
+        console.log("EmailJS is loaded:", window.emailjs);
+        document.body.insertAdjacentHTML("beforeend", "<p>EmailJS is loaded correctly.</p>");
+      } else {
+        console.error("EmailJS is NOT loaded");
+        document.body.insertAdjacentHTML("beforeend", "<p style='color: red;'>EmailJS is not loaded!</p>");
+      }
+    }, 1000);
+  </script>
+  <script>
+    localStorage.setItem('freeDate', 'June 1st');
+    localStorage.setItem('dateOptions', JSON.stringify(['June 2nd', 'June 3rd']));
+    localStorage.setItem('foodOptions', JSON.stringify(['Pizza', 'Salad']));
+  </script>
+  <button id="testButton" style="font-size: 18px; padding: 10px 20px;">Test Email</button>
+  <script>
+    document.getElementById("testButton").addEventListener("click", function() {
+      const templateParams = {
+        free_date: localStorage.getItem("freeDate") || "N/A",
+        additional_dates: localStorage.getItem("dateOptions") || "None",
+        food_options: localStorage.getItem("foodOptions") || "None"
+      };
+      console.log("Attempting to send email with:", templateParams);
+      
+      emailjs.send("service_3e26bkn", "template_28o9s5q", templateParams)
+        .then(response => console.log("Email sent successfully!", response))
+        .catch(error => console.error("Error sending email:", error));
+    });
+  </script>
+</body>
+</html> 

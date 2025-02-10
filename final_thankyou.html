@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Thank You!</title>
+  <!-- Include the latest supported EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
+  <!-- Include the centralized stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+  <script defer>
+    window.addEventListener("DOMContentLoaded", function() {
+      // Initialize EmailJS after the SDK has loaded.
+      emailjs.init("JxPRB9C_kRcR7gVaI");
+      console.log("EmailJS initialized:", window.emailjs);
+    });
+  </script>
+  <style>
+    body {
+      /* background-color: pink;  <-- REMOVED or commented out */
+      font-family: Arial, sans-serif;
+      margin: 0;
+      overflow: hidden; /* prevent scrollbars from the canvas */
+      position: relative;
+      height: 100vh;
+    }
+    
+    /* Container for selections at the top */
+    #selections {
+      width: 100%;
+      text-align: center;
+      margin-top: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .summary {
+      font-size: 20px;
+      margin: 10px 0;
+    }
+    
+    /* Container for the main content (centered vertically and horizontally) */
+    #centralContent {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 1;
+    }
+    
+    /* "Thank You" text styling */
+    .thankYou {
+      font-size: 96px;
+      font-weight: bold;
+      color: rgb(255, 95, 95);
+      margin: 20px;
+    }
+    
+    /* "I Love You" text styling */
+    .loveText {
+      font-size: 120px;
+      font-weight: bold;
+      color: rgb(255, 90, 228); /* changed from deeppink */
+      animation: pulse 2s infinite;
+      margin: 20px;
+      -webkit-text-stroke: 4px rgb(255, 255, 255); /* applies the outline in supported browsers */
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    
+    /* Center and style the image "Third.png" with a collision border */
+    .centerImage {
+      display: block;
+      margin: 20px auto;
+      max-width: 500px;
+      height: auto;
+      border: 5px solid rgb(197, 197, 197); /* collision border */
+    }
+    
+    /* Styling for the prompt text and the Go Back button below the image */
+    .pathText {
+      font-size: 32px;
+      font-weight: bold;
+      color: rgb(39, 187, 255);
+      margin: 20px;
+    }
+    
+    .buttonPath {
+      font-size: 24px;
+      padding: 15px 30px;
+      background: linear-gradient(45deg, #4a87b2, #255e94);
+      border: 2px solid #3a8bd6;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .buttonPath:hover {
+      background: linear-gradient(45deg, #265d90, #4279a1);
+      transform: translateY(-2px);
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Canvas for heart animations */
+    #heartCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Selections moved to the top -->
+ 
+  
+  <!-- Main content centered in the middle -->
+  <div id="centralContent">
+    <h1 id="thankYouText" class="thankYou">Thank You!!!</h1>
+    <!-- "I Love You" text will also serve as the spawn point for extra hearts -->
+    <p id="loveText" class="loveText">I love youuuu</p>
+    <img src="Pictures/Third.png" alt="Third Image" class="centerImage">
+    <!-- New text and updated Go Back button below the image -->
+    <p class="pathText">Now trying going down the other path</p>
+    <button class="buttonPath" onclick="window.location.href='index.html'">Go Back</button>
+  </div>
+  
+  <!-- Canvas for heart animations -->
+  <canvas id="heartCanvas"></canvas>
+  
+  <script>
+    // Display stored selections from localStorage.
+    const freeDate = localStorage.getItem('freeDate');
+    const additionalDates = JSON.parse(localStorage.getItem('dateOptions') || "[]");
+    const foodOptions = JSON.parse(localStorage.getItem('foodOptions') || "[]");
+
+    document.getElementById('freeDateDisplay').textContent = "Date you're free: " + (freeDate || "N/A");
+    document.getElementById('additionalDatesDisplay').textContent = "Additional Dates: " + (additionalDates.length ? additionalDates.join(", ") : "None");
+    document.getElementById('foodOptionsDisplay').textContent = "Food Preferences: " + (foodOptions.length ? foodOptions.join(", ") : "None");
+  </script>
+  
+  <script>
+    // Set up the canvas.
+    const canvas = document.getElementById("heartCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // Heart class accepts position, velocity, radius, font size, and (optionally) a lifespan.
+    class Heart {
+      constructor(x, y, vx, vy, radius, fontSize, lifeSpan = null) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.radius = radius;
+        this.fontSize = fontSize;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+        this.lifeSpan = lifeSpan;
+        if (lifeSpan) {
+          this.birthTime = Date.now();
+        }
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.font = this.fontSize + "px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("❤️", 0, 0);
+        ctx.restore();
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.rotation += this.rotationSpeed;
+        // Bounce off canvas edges
+        if (this.x < this.radius || this.x > canvas.width - this.radius) {
+          this.vx *= -1;
+          this.x = Math.max(this.radius, Math.min(this.x, canvas.width - this.radius));
+        }
+        if (this.y < this.radius || this.y > canvas.height - this.radius) {
+          this.vy *= -1;
+          this.y = Math.max(this.radius, Math.min(this.y, canvas.height - this.radius));
+        }
+      }
+
+      isExpired() {
+        if (this.lifeSpan === null) return false;
+        return (Date.now() - this.birthTime) > this.lifeSpan;
+      }
+    }
+
+    // Two arrays: bouncingHearts (original hearts) and spawnedHearts 
+    const bouncingHearts = [];
+    const spawnedHearts = [];
+
+    // Create original bouncing hearts.
+    const numBouncingHearts = 20;
+    const bouncingHeartRadius = 60;
+    const bouncingHeartFontSize = 90;
+    for (let i = 0; i < numBouncingHearts; i++) {
+      let x = Math.random() * (canvas.width - 2 * bouncingHeartRadius) + bouncingHeartRadius;
+      let y = Math.random() * (canvas.height - 2 * bouncingHeartRadius) + bouncingHeartRadius;
+      let vx = (Math.random() - 0.5) * 4;
+      let vy = (Math.random() - 0.5) * 4;
+      bouncingHearts.push(new Heart(x, y, vx, vy, bouncingHeartRadius, bouncingHeartFontSize));
+    }
+
+    // Spawn a heart from the "I love you" text.
+    function spawnHeart() {
+      const loveTextElement = document.getElementById("loveText");
+      const rect = loveTextElement.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const spawnedHeartRadius = 70;
+      const spawnedHeartFontSize = 140;
+      const vx = (Math.random() - 0.5) * 12;
+      const vy = (Math.random() - 0.5) * 12;
+      const lifeSpan = 5000; // 5 seconds lifespan.
+      spawnedHearts.push(new Heart(x, y, vx, vy, spawnedHeartRadius, spawnedHeartFontSize, lifeSpan));
+    }
+    
+    setInterval(spawnHeart, 300);
+
+    // Resolve collisions between all hearts (both arrays merged)
+    function resolveCollisions(allHearts) {
+      for (let i = 0; i < allHearts.length; i++) {
+        for (let j = i + 1; j < allHearts.length; j++) {
+          let dx = allHearts[j].x - allHearts[i].x;
+          let dy = allHearts[j].y - allHearts[i].y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < allHearts[i].radius + allHearts[j].radius) {
+            // Swap velocities to simulate a simple collision.
+            let tempVx = allHearts[i].vx;
+            let tempVy = allHearts[i].vy;
+            allHearts[i].vx = allHearts[j].vx;
+            allHearts[i].vy = allHearts[j].vy;
+            allHearts[j].vx = tempVx;
+            allHearts[j].vy = tempVy;
+          }
+        }
+      }
+    }
+    
+    // Check and resolve collision of a heart with the image border.
+    function checkCollisionWithImage(heart, rect) {
+      if (!rect) return;
+      if (
+        heart.x + heart.radius > rect.left &&
+        heart.x - heart.radius < rect.right &&
+        heart.y + heart.radius > rect.top &&
+        heart.y - heart.radius < rect.bottom
+      ) {
+        const dLeft = Math.abs(heart.x - rect.left);
+        const dRight = Math.abs(rect.right - heart.x);
+        const dTop = Math.abs(heart.y - rect.top);
+        const dBottom = Math.abs(rect.bottom - heart.y);
+        const min = Math.min(dLeft, dRight, dTop, dBottom);
+        if (min === dLeft || min === dRight) {
+          heart.vx = -heart.vx;
+        } else {
+          heart.vy = -heart.vy;
+        }
+      }
+    }
+    
+    // Animation loop that updates, resolves collisions, and draws both sets of hearts.
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Get the image bounding rectangle for collision detection.
+      const imgElement = document.querySelector('.centerImage');
+      const imgRect = imgElement ? imgElement.getBoundingClientRect() : null;
+      
+      // Merge both arrays for collision detection.
+      const allHearts = bouncingHearts.concat(spawnedHearts);
+      resolveCollisions(allHearts);
+      
+      // Update and draw the original bouncing hearts.
+      bouncingHearts.forEach(heart => {
+        heart.update();
+        if (imgRect) checkCollisionWithImage(heart, imgRect);
+        heart.draw(ctx);
+      });
+      
+      // Update, draw, and remove spawned hearts when expired.
+      for (let i = spawnedHearts.length - 1; i >= 0; i--) {
+        spawnedHearts[i].update();
+        if (imgRect) checkCollisionWithImage(spawnedHearts[i], imgRect);
+        spawnedHearts[i].draw(ctx);
+        if (spawnedHearts[i].isExpired()) {
+          spawnedHearts.splice(i, 1);
+        }
+      }
+      
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+  
+  <script>
+    // EmailJS sending function.
+    function sendEmail() {
+      // Retrieve selections from localStorage.
+      const freeDate = localStorage.getItem('freeDate') || "N/A";
+      const additionalDates = JSON.parse(localStorage.getItem('dateOptions') || "[]");
+      const foodOptions = JSON.parse(localStorage.getItem('foodOptions') || "[]");
+
+      // Prepare the template parameters - ensure these keys match your EmailJS template.
+      let templateParams = {
+        free_date: freeDate,
+        additional_dates: additionalDates.length ? additionalDates.join(", ") : "None",
+        food_options: foodOptions.length ? foodOptions.join(", ") : "None"
+      };
+
+      console.log("Attempting to send email with these parameters:", templateParams);
+
+      emailjs.send("service_3e26bkn", "template_28o9s5q", templateParams)
+        .then(function(response) {
+          console.log("Email sent successfully!", response.status, response.text);
+        }, function(error) {
+          console.error("Error sending email:", error);
+        });
+    }
+
+    // Automatically trigger sendEmail when the window loads.
+    window.addEventListener('load', function() {
+      console.log("Window loaded – automatically sending email...");
+      //sendEmail();
+    });
+  </script>
+  
+  <script>
+    console.log("Email template parameters:", {
+      free_date: localStorage.getItem('freeDate'),
+      additional_dates: localStorage.getItem('dateOptions'),
+      food_options: localStorage.getItem('foodOptions')
+    });
+  </script>
+</body>
+</html>

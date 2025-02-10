@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Where you wanna go?</title>
+  <!-- Include the global background stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      /* background-color: pink; */ /* removed to allow the new layered background */
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin-top: 50px;
+      padding: 20px;
+      color: white; /* All text in the body will be white */
+    }
+    /* Make the top text (h1) bigger */
+    h1 {
+      font-size: 72px;
+      margin-bottom: 30px;
+    }
+    /* Make label text larger */
+    .option label {
+      font-size: 50px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .option {
+      display: inline-block;
+      margin: 20px;
+      text-align: center;
+    }
+    /* Fix all option images to 400x400 and reduce bottom margin for closer text */
+    .option img {
+      width: 400px;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      margin: 0 auto 5px;
+    }
+    /* Make checkboxes larger and transparent-ish */
+    input[type="checkbox"] {
+      transform: scale(2.5);
+      margin-right: 10px;
+      vertical-align: middle;
+      opacity: 0.6; /* Semi-transparent checkboxes */
+    }
+    /* Increased Next button styling */
+    button {
+      font-size: 32px;
+      padding: 16px 30px;
+      margin: 10px auto;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 500px;
+      box-sizing: border-box;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    /* Other field styles */
+    .other-option {
+      margin-top: 20px;
+    }
+    .other-option label {
+      font-size: 40px;
+    }
+    .other-option input[type="text"] {
+      font-size: 44px;
+      padding: 14px;
+      margin: 10px auto;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      width: 500px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+      color: white; /* Make the input text white */
+      background-color: transparent; /* Transparent background for the input */
+    }
+    .other-option input[type="text"]:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+    /* Placeholder text styling */
+    .other-option input[type="text"]::placeholder {
+      color: white;
+    }
+    /* Green glowing outline around the picture when its checkbox is selected */
+    label:has(input[type="checkbox"]:checked) img {
+      outline: 7px solid limegreen;
+      box-shadow: 0 0 15px limegreen;
+    }
+  </style>
+</head>
+<body>
+  <h1>Where you wanna go?</h1>
+  <form id="dateOptionsForm">
+    <div class="option">
+      <label>
+        <img src="https://i.pinimg.com/1200x/c2/f4/60/c2f46020046740765a6c4f1dc6dc1343.jpg" alt="Picnic">
+        <input type="checkbox" name="dateOptions" value="Picnic"> Picnic
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://ktla.com/wp-content/uploads/sites/4/2022/09/movie-theater-popcorn.jpg?w=2560&h=1440&crop=1" alt="Movies">
+        <input type="checkbox" name="dateOptions" value="Movies"> Movies
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://static.wixstatic.com/media/c87568_f5ab703a74a54c329170be50f5978a82~mv2.jpg/v1/fill/w_640,h_400,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/c87568_f5ab703a74a54c329170be50f5978a82~mv2.jpg" alt="Escape Room">
+        <input type="checkbox" name="dateOptions" value="Escape Room"> Escape Room
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://www.malls.com/wp-content/uploads/2024/09/91a5bdf6ba5b36e8dfafc4426e21e050.jpg" alt="Mall">
+        <input type="checkbox" name="dateOptions" value="Mall"> Mall
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://s3-media0.fl.yelpcdn.com/bphoto/8wL-9LtsGwjztkcmT8vsqA/1000s.jpg" alt="Mini Golf">
+        <input type="checkbox" name="dateOptions" value="Mini Golf"> Mini Golf
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://img.texasmonthly.com/2023/09/texas-science-natural-history-museum-t-rex.jpg?auto=compress&crop=faces&fit=fit&fm=jpg&h=0&ixlib=php-3.3.1&q=45&w=1250" alt="Museum">
+        <input type="checkbox" name="dateOptions" value="Museum"> Museum
+      </label>
+    </div>
+    <div class="option">
+      <label>
+        <img src="https://monsterminigolf.com/wp-content/uploads/2023/06/20200710_134448-scaled-1.jpg" alt="Arcade">
+        <input type="checkbox" name="dateOptions" value="Arcade"> Arcade
+      </label>
+    </div>
+    <br>
+    <button type="submit">Next</button>
+    <div class="other-option">
+      <label for="otherOption">Other: </label>
+      <input type="text" id="otherOption" name="otherOption" placeholder="Where else">
+    </div>
+  </form>
+  <script>
+    document.getElementById('dateOptionsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      let selectedDates = [];
+      document.querySelectorAll('input[name="dateOptions"]:checked').forEach(function(checkbox) {
+        selectedDates.push(checkbox.value);
+      });
+      let otherVal = document.getElementById('otherOption').value;
+      if(otherVal.trim() !== "") {
+        selectedDates.push(otherVal.trim());
+      }
+      localStorage.setItem('dateOptions', JSON.stringify(selectedDates));
+      window.location.href = "food_options.html";
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+          const label = checkbox.closest('label');
+          const img = label.querySelector('img');
+          if (checkbox.checked) {
+            img.classList.add('selected');
+          } else {
+            img.classList.remove('selected');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
